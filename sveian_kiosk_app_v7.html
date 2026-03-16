@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Sveian kiosk app</title>
+  <style>
+    :root {
+      --bg:#12131a;
+      --bg2:#1b1d27;
+      --panel:#232536;
+      --panel2:#2b2e43;
+      --line:rgba(255,255,255,.09);
+      --text:#f7f2ea;
+      --muted:#c8c4d8;
+      --accent:#ff4fa3;
+      --accent2:#ffd166;
+      --accent3:#7f6bff;
+      --good:#38d39f;
+      --warn:#ff6d8d;
+      --shadow:0 18px 40px rgba(0,0,0,.28);
+    }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html, body { height:100%; }
+    body {
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(255,79,163,.18), transparent 28%),
+        radial-gradient(circle at top left, rgba(127,107,255,.22), transparent 28%),
+        linear-gradient(180deg, #1e0827 0px, var(--bg) 140px);
+    }
+    .app {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 18px 14px 190px;
+    }
+    .hero {
+      background: linear-gradient(135deg, rgba(127,107,255,.20), rgba(255,79,163,.18));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:28px;
+      padding:22px 18px;
+      box-shadow:var(--shadow);
+      margin-bottom:14px;
+    }
+    h1 {
+      margin:0 0 8px;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height:1.04;
+    }
+    .sub {
+      margin:0;
+      color:var(--muted);
+      font-size:1.04rem;
+      line-height:1.35;
+    }
+    .toolbar {
+      display:grid;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .search {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      padding:14px 16px;
+      box-shadow:var(--shadow);
+    }
+    .search input {
+      width:100%;
+      border:0;
+      outline:none;
+      background:transparent;
+      color:var(--text);
+      font-size:1rem;
+    }
+    .chips {
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .chip {
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:999px;
+      padding:11px 16px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .chip.active {
+      background:linear-gradient(135deg, var(--accent2), #ffba08);
+      color:#2f1a00;
+      border-color:transparent;
+    }
+    .layout {
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+    }
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:12px;
+    }
+    .card {
+      position:relative;
+      text-align:left;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      border-radius:24px;
+      padding:16px 14px;
+      min-height:152px;
+      color:var(--text);
+      box-shadow:var(--shadow);
+      cursor:pointer;
+    }
+    .card:active { transform:scale(.98); }
+    .count {
+      position:absolute;
+      top:12px;
+      right:12px;
+      min-width:38px;
+      height:38px;
+      padding:0 11px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      font-size:.95rem;
+      background:linear-gradient(135deg, var(--accent), #ff7a7a);
+      color:white;
+    }
+    .icon { font-size:2.25rem; line-height:1; margin:12px 0 12px; }
+    .name { font-size:1.02rem; font-weight:900; line-height:1.15; margin-bottom:6px; }
+    .meta { color:var(--muted); font-size:.9rem; margin-bottom:12px; }
+    .footer {
+      display:flex;
+      align-items:end;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .price { color:var(--accent2); font-size:1.15rem; font-weight:900; }
+    .tap { color:var(--muted); font-size:.82rem; }
+    .panel {
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .panel h2 {
+      margin:0 0 12px;
+      font-size:1.2rem;
+    }
+    .order-list {
+      display:grid;
+      gap:10px;
+      max-height:340px;
+      overflow:auto;
+      margin-bottom:14px;
+    }
+    .empty {
+      padding:16px;
+      background:rgba(255,255,255,.05);
+      border:1px dashed rgba(255,255,255,.16);
+      border-radius:18px;
+      color:var(--muted);
+    }
+    .row {
+      display:grid;
+      grid-template-columns:42px 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:12px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:18px;
+    }
+    .rowicon { font-size:1.55rem; text-align:center; }
+    .rowname { font-weight:900; margin-bottom:4px; }
+    .rowmeta { color:var(--muted); font-size:.92rem; }
+    .qty {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top:8px;
+    }
+    .qty button {
+      width:34px;
+      height:34px;
+      border:0;
+      border-radius:10px;
+      background:rgba(255,255,255,.10);
+      color:white;
+      font-size:1.15rem;
+      font-weight:900;
+    }
+    .linetotal { font-weight:900; white-space:nowrap; }
+    .summary {
+      display:grid;
+      gap:10px;
+      padding:16px;
+      border-radius:20px;
+      background:linear-gradient(135deg, rgba(255,79,163,.16), rgba(255,209,102,.14));
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .sumrow {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      color:var(--muted);
+    }
+    .sumtotal {
+      display:flex;
+      justify-content:space-between;
+      align-items:end;
+      gap:12px;
+      padding-top:10px;
+      border-top:1px solid rgba(255,255,255,.12);
+      font-weight:900;
+    }
+    .sumtotal strong {
+      font-size:2rem;
+      color:var(--accent2);
+      line-height:1;
+    }
+    .actions {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+    .actions button {
+      border:0;
+      border-radius:16px;
+      padding:14px;
+      font-size:1rem;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .ok { background:linear-gradient(135deg, var(--good), #5be8c0); color:#07261d; }
+    .blue { background:linear-gradient(135deg, #44c7ff, #5c7dff); color:white; }
+    .pink { background:linear-gradient(135deg, #ff6f91, #ff4f7d); color:white; }
+    .orange { background:linear-gradient(135deg, var(--accent), #ff7c66); color:white; }
+    .sticky {
+      position:fixed;
+      left:0; right:0; bottom:0;
+      padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+      background:linear-gradient(180deg, rgba(18,19,26,0), rgba(18,19,26,.86) 18%, rgba(18,19,26,1));
+    }
+    .sticky-inner {
+      max-width:1000px;
+      margin:0 auto;
+      background:rgba(44,34,66,.92);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:22px;
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      box-shadow:var(--shadow);
+    }
+    .sticky-left {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#cdbfff;
+      font-weight:900;
+    }
+    .sticky-total { color:var(--accent2); font-weight:900; font-size:1.15rem; white-space:nowrap; }
+    .hide { display:none !important; }
+
+    @media (min-width: 900px) {
+      .layout { grid-template-columns:minmax(0,1.5fr) minmax(320px,.9fr); align-items:start; }
+      .panel { position:sticky; top:18px; }
+      .grid { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .grid { grid-template-columns:repeat(2, minmax(0,1fr)); }
+      .actions { grid-template-columns:1fr; }
+      .card { min-height:146px; }
+      .name { font-size:.98rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <h1>Sveian kiosk app</h1>
+      <p class="sub">Store varekort som vises med én gang. Trykk på kortet for å legge til +1.</p>
+    </section>
+
+    <section class="toolbar">
+      <label class="search">
+        <span>🔎</span>
+        <input id="searchInput" type="text" placeholder="Søk etter vare..." oninput="applyFilters()" />
+      </label>
+      <div class="chips">
+        <button class="chip active" onclick="setCategory('Alle', this)" type="button">Alle</button>
+        <button class="chip" onclick="setCategory('Billetter', this)" type="button">Billetter</button>
+        <button class="chip" onclick="setCategory('Merch', this)" type="button">Merch</button>
+        <button class="chip" onclick="setCategory('Drikke', this)" type="button">Drikke</button>
+        <button class="chip" onclick="setCategory('Mat', this)" type="button">Mat</button>
+        <button class="chip" onclick="setCategory('Snacks', this)" type="button">Snacks</button>
+        <button class="chip" onclick="setCategory('Tillegg', this)" type="button">Tillegg</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div id="grid" class="grid">
+        
+    <button class="card" data-name="Inngangsbillett" data-category="Billetter" data-price="475" onclick="addItem('ticket','Inngangsbillett',475)" type="button">
+      <div class="count" id="count-ticket">0</div>
+      <div class="icon">🎟️</div>
+      <div class="name">Inngangsbillett</div>
+      <div class="meta">Billetter</div>
+      <div class="footer">
+        <span class="price">475 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="T-skjorte" data-category="Merch" data-price="200" onclick="addItem('shirt','T-skjorte',200)" type="button">
+      <div class="count" id="count-shirt">0</div>
+      <div class="icon">👕</div>
+      <div class="name">T-skjorte</div>
+      <div class="meta">Merch</div>
+      <div class="footer">
+        <span class="price">200 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Miljøavgift på glass" data-category="Tillegg" data-price="20" onclick="addItem('glassfee','Miljøavgift på glass',20)" type="button">
+      <div class="count" id="count-glassfee">0</div>
+      <div class="icon">♻️</div>
+      <div class="name">Miljøavgift på glass</div>
+      <div class="meta">Tillegg</div>
+      <div class="footer">
+        <span class="price">20 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Dahls pils" data-category="Drikke" data-price="90" onclick="addItem('dahls','Dahls pils',90)" type="button">
+      <div class="count" id="count-dahls">0</div>
+      <div class="icon">🍺</div>
+      <div class="name">Dahls pils</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Frydenlund Juicy IPA" data-category="Drikke" data-price="90" onclick="addItem('juicyipa','Frydenlund Juicy IPA',90)" type="button">
+      <div class="count" id="count-juicyipa">0</div>
+      <div class="icon">🍻</div>
+      <div class="name">Frydenlund Juicy IPA</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Frydenlund fatøl" data-category="Drikke" data-price="90" onclick="addItem('fatol','Frydenlund fatøl',90)" type="button">
+      <div class="count" id="count-fatol">0</div>
+      <div class="icon">🍺</div>
+      <div class="name">Frydenlund fatøl</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Corona" data-category="Drikke" data-price="90" onclick="addItem('corona','Corona',90)" type="button">
+      <div class="count" id="count-corona">0</div>
+      <div class="icon">🍺</div>
+      <div class="name">Corona</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Grans glutenfri ØL" data-category="Drikke" data-price="90" onclick="addItem('glutenfri','Grans glutenfri ØL',90)" type="button">
+      <div class="count" id="count-glutenfri">0</div>
+      <div class="icon">🍺</div>
+      <div class="name">Grans glutenfri ØL</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Smitnoff ICE" data-category="Drikke" data-price="90" onclick="addItem('smirnoff','Smitnoff ICE',90)" type="button">
+      <div class="count" id="count-smirnoff">0</div>
+      <div class="icon">🧊</div>
+      <div class="name">Smitnoff ICE</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Breezer" data-category="Drikke" data-price="90" onclick="addItem('breezer','Breezer',90)" type="button">
+      <div class="count" id="count-breezer">0</div>
+      <div class="icon">🍹</div>
+      <div class="name">Breezer</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Somersby Pære" data-category="Drikke" data-price="90" onclick="addItem('somersby','Somersby Pære',90)" type="button">
+      <div class="count" id="count-somersby">0</div>
+      <div class="icon">🍐</div>
+      <div class="name">Somersby Pære</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Rødvin" data-category="Drikke" data-price="90" onclick="addItem('rodvin','Rødvin',90)" type="button">
+      <div class="count" id="count-rodvin">0</div>
+      <div class="icon">🍷</div>
+      <div class="name">Rødvin</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Hvitvin" data-category="Drikke" data-price="90" onclick="addItem('hvitvin','Hvitvin',90)" type="button">
+      <div class="count" id="count-hvitvin">0</div>
+      <div class="icon">🥂</div>
+      <div class="name">Hvitvin</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Ginger Joe" data-category="Drikke" data-price="90" onclick="addItem('gingerjoe','Ginger Joe',90)" type="button">
+      <div class="count" id="count-gingerjoe">0</div>
+      <div class="icon">🫚</div>
+      <div class="name">Ginger Joe</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">90 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Shots" data-category="Drikke" data-price="50" onclick="addItem('shots','Shots',50)" type="button">
+      <div class="count" id="count-shots">0</div>
+      <div class="icon">🥃</div>
+      <div class="name">Shots</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">50 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Slush" data-category="Drikke" data-price="40" onclick="addItem('slush','Slush',40)" type="button">
+      <div class="count" id="count-slush">0</div>
+      <div class="icon">🥤</div>
+      <div class="name">Slush</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">40 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Brus" data-category="Drikke" data-price="35" onclick="addItem('brus','Brus',35)" type="button">
+      <div class="count" id="count-brus">0</div>
+      <div class="icon">🥤</div>
+      <div class="name">Brus</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">35 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Kaffe" data-category="Drikke" data-price="25" onclick="addItem('kaffe','Kaffe',25)" type="button">
+      <div class="count" id="count-kaffe">0</div>
+      <div class="icon">☕</div>
+      <div class="name">Kaffe</div>
+      <div class="meta">Drikke</div>
+      <div class="footer">
+        <span class="price">25 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Pølse med brød" data-category="Mat" data-price="40" onclick="addItem('polse','Pølse med brød',40)" type="button">
+      <div class="count" id="count-polse">0</div>
+      <div class="icon">🌭</div>
+      <div class="name">Pølse med brød</div>
+      <div class="meta">Mat</div>
+      <div class="footer">
+        <span class="price">40 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Hel plate vaffel" data-category="Mat" data-price="40" onclick="addItem('vaffel','Hel plate vaffel',40)" type="button">
+      <div class="count" id="count-vaffel">0</div>
+      <div class="icon">🧇</div>
+      <div class="name">Hel plate vaffel</div>
+      <div class="meta">Mat</div>
+      <div class="footer">
+        <span class="price">40 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Popcorn" data-category="Snacks" data-price="40" onclick="addItem('popcorn','Popcorn',40)" type="button">
+      <div class="count" id="count-popcorn">0</div>
+      <div class="icon">🍿</div>
+      <div class="name">Popcorn</div>
+      <div class="meta">Snacks</div>
+      <div class="footer">
+        <span class="price">40 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Potetgull" data-category="Snacks" data-price="30" onclick="addItem('potetgull','Potetgull',30)" type="button">
+      <div class="count" id="count-potetgull">0</div>
+      <div class="icon">🥔</div>
+      <div class="name">Potetgull</div>
+      <div class="meta">Snacks</div>
+      <div class="footer">
+        <span class="price">30 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+    <button class="card" data-name="Sukkerspinn" data-category="Snacks" data-price="40" onclick="addItem('sukkerspinn','Sukkerspinn',40)" type="button">
+      <div class="count" id="count-sukkerspinn">0</div>
+      <div class="icon">🍭</div>
+      <div class="name">Sukkerspinn</div>
+      <div class="meta">Snacks</div>
+      <div class="footer">
+        <span class="price">40 kr</span>
+        <span class="tap">Trykk +1</span>
+      </div>
+    </button>
+    
+      </div>
+
+      <aside class="panel">
+        <h2>Bestilling</h2>
+        <div id="orderList" class="order-list">
+          <div class="empty">Ingen varer valgt ennå.</div>
+        </div>
+
+        <div class="summary">
+          <div class="sumrow"><span>Antall enheter</span><strong id="unitCount">0</strong></div>
+          <div class="sumrow"><span>Ulike varer</span><strong id="uniqueCount">0</strong></div>
+          <div class="sumtotal"><span>Totalt</span><strong id="grandTotal">0 kr</strong></div>
+        </div>
+
+        <div class="actions">
+          <button class="ok" onclick="finishSale()" type="button">Ferdig salg</button>
+          <button class="blue" onclick="undoLast()" type="button">Trekk fra siste</button>
+          <button class="pink" onclick="resetAll()" type="button">Nullstill</button>
+          <button class="orange" onclick="demoOrder()" type="button">Demoordre</button>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <div class="sticky">
+    <div class="sticky-inner">
+      <div class="sticky-left"><span>🛒</span><span id="stickyCount">0 varer</span></div>
+      <div class="sticky-total" id="stickyTotal">Totalt: 0 kr</div>
+    </div>
+  </div>
+
+  <script>
+    const iconMap = {
+      "Inngangsbillett":"🎟️","T-skjorte":"👕","Miljøavgift på glass":"♻️","Dahls pils":"🍺",
+      "Frydenlund Juicy IPA":"🍻","Frydenlund fatøl":"🍺","Corona":"🍺","Grans glutenfri ØL":"🍺",
+      "Smitnoff ICE":"🧊","Breezer":"🍹","Somersby Pære":"🍐","Rødvin":"🍷","Hvitvin":"🥂",
+      "Ginger Joe":"🫚","Shots":"🥃","Slush":"🥤","Brus":"🥤","Kaffe":"☕","Pølse med brød":"🌭",
+      "Hel plate vaffel":"🧇","Popcorn":"🍿","Potetgull":"🥔","Sukkerspinn":"🍭"
+    };
+
+    let activeCategory = "Alle";
+    let counts = {};
+    let prices = {};
+    let lastAdded = null;
+
+    document.querySelectorAll(".card").forEach(card => {
+      prices[card.dataset.name] = Number(card.dataset.price);
+    });
+
+    function formatKr(value) {
+      return new Intl.NumberFormat("nb-NO").format(value) + " kr";
+    }
+
+    function setCategory(category, btn) {
+      activeCategory = category;
+      document.querySelectorAll(".chip").forEach(el => el.classList.remove("active"));
+      btn.classList.add("active");
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      document.querySelectorAll(".card").forEach(card => {
+        const matchCategory = activeCategory === "Alle" || card.dataset.category === activeCategory;
+        const hay = (card.dataset.name + " " + card.dataset.category).toLowerCase();
+        const matchSearch = !q || hay.includes(q);
+        card.classList.toggle("hide", !(matchCategory && matchSearch));
+      });
+    }
+
+    function addItem(key, name, price) {
+      counts[name] = (counts[name] || 0) + 1;
+      lastAdded = name;
+      const badge = document.getElementById("count-" + key);
+      if (badge) badge.textContent = counts[name];
+      renderOrder();
+    }
+
+    function changeItem(name, diff) {
+      counts[name] = Math.max(0, (counts[name] || 0) + diff);
+      const card = Array.from(document.querySelectorAll(".card")).find(c => c.dataset.name === name);
+      if (card) {
+        const badge = card.querySelector(".count");
+        badge.textContent = counts[name];
+      }
+      if (counts[name] === 0) delete counts[name];
+      renderOrder();
+    }
+
+    function renderOrder() {
+      const orderList = document.getElementById("orderList");
+      const chosen = Object.keys(counts).filter(name => counts[name] > 0).sort((a,b) => a.localeCompare(b, "nb"));
+      if (!chosen.length) {
+        orderList.innerHTML = '<div class="empty">Ingen varer valgt ennå.</div>';
+      } else {
+        orderList.innerHTML = chosen.map(name => `
+          <div class="row">
+            <div class="rowicon">${iconMap[name] || "✨"}</div>
+            <div>
+              <div class="rowname">${name}</div>
+              <div class="rowmeta">${formatKr(prices[name])} per stk</div>
+              <div class="qty">
+                <button type="button" onclick="changeItem('${name.replace(/'/g, "\\'")}', -1)">−</button>
+                <strong>${counts[name]}</strong>
+                <button type="button" onclick="changeItem('${name.replace(/'/g, "\\'")}', 1)">+</button>
+              </div>
+            </div>
+            <div class="linetotal">${formatKr(counts[name] * prices[name])}</div>
+          </div>
+        `).join("");
+      }
+
+      let unitCount = 0;
+      let uniqueCount = 0;
+      let total = 0;
+      Object.keys(counts).forEach(name => {
+        if (counts[name] > 0) {
+          unitCount += counts[name];
+          uniqueCount += 1;
+          total += counts[name] * prices[name];
+        }
+      });
+
+      document.getElementById("unitCount").textContent = unitCount;
+      document.getElementById("uniqueCount").textContent = uniqueCount;
+      document.getElementById("grandTotal").textContent = formatKr(total);
+      document.getElementById("stickyCount").textContent = unitCount + " varer";
+      document.getElementById("stickyTotal").textContent = "Totalt: " + formatKr(total);
+    }
+
+    function resetAll() {
+      counts = {};
+      document.querySelectorAll(".count").forEach(el => el.textContent = "0");
+      renderOrder();
+    }
+
+    function undoLast() {
+      if (!lastAdded || !counts[lastAdded]) return;
+      changeItem(lastAdded, -1);
+    }
+
+    function demoOrder() {
+      resetAll();
+      addItem('ticket', 'Inngangsbillett', 475);
+      addItem('dahls', 'Dahls pils', 90);
+      addItem('brus', 'Brus', 35);
+      addItem('polse', 'Pølse med brød', 40);
+    }
+
+    function finishSale() {
+      let total = 0;
+      Object.keys(counts).forEach(name => total += (counts[name] || 0) * prices[name]);
+      if (total === 0) {
+        alert("Ingen varer er valgt.");
+        return;
+      }
+      alert("Salg registrert. Totalt: " + formatKr(total));
+      resetAll();
+    }
+  </script>
+</body>
+</html>
